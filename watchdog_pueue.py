@@ -72,9 +72,8 @@ def parse_duration(start_str: str | None, end_str: str | None) -> float | None:
     if not start_str or not end_str:
         return None
     try:
-        fmt = "%Y-%m-%dT%H:%M:%S.%fZ"
-        start = datetime.strptime(start_str, fmt).replace(tzinfo=timezone.utc)
-        end = datetime.strptime(end_str, fmt).replace(tzinfo=timezone.utc)
+        start = datetime.fromisoformat(start_str)
+        end = datetime.fromisoformat(end_str)
         return round((end - start).total_seconds(), 3)
     except Exception:
         return None
@@ -86,20 +85,22 @@ def build_payload(task_id: str, result: str) -> dict:
 
     task = log_json.get("task", {}) if log_json else {}
 
-    start_str = task.get("start")
-    end_str = task.get("end")
-
-    # exit_code: status が {"Done": {"Failed": <code>}} の形式の場合に取得
-    exit_code: int | None = None
+    # start/end/result は task.status.Done の中にある
     status = task.get("status", {})
-    if isinstance(status, dict):
-        done = status.get("Done")
-        if isinstance(done, dict):
-            failed = done.get("Failed")
+    done = status.get("Done", {}) if isinstance(status, dict) else {}
+    start_str = done.get("start") if isinstance(done, dict) else None
+    end_str = done.get("end") if isinstance(done, dict) else None
+
+    # exit_code: Done.result が "Success" なら 0、{"Failed": <code>} なら終了コード
+    exit_code: int | None = None
+    if isinstance(done, dict):
+        done_result = done.get("result")
+        if done_result == "Success":
+            exit_code = 0
+        elif isinstance(done_result, dict):
+            failed = done_result.get("Failed")
             if isinstance(failed, int):
                 exit_code = failed
-        elif done == "Success":
-            exit_code = 0
 
     payload = {
         "task_id": task_id,

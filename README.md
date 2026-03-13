@@ -115,7 +115,7 @@ pueue add -- ls -la
   "working_dir": "/home/user/project",
   "exit_code": 0,
   "duration_seconds": 123.456,
-  "user": "yamaama",
+  "user": "username",
   "hostname": "my-machine",
   "ip": "192.168.1.10",
   "timestamp": "2026-03-14T12:00:00+00:00",
