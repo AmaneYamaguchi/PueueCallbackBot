@@ -96,7 +96,9 @@ def get_pueue_counts() -> dict:
     for task in tasks:
         status = task.get("status")
         if isinstance(status, dict):
-            if "Running" in status:
+            if "Queued" in status:
+                queued += 1
+            elif "Running" in status:
                 running += 1
             elif "Done" in status:
                 done_result = status["Done"].get("result")
@@ -104,8 +106,6 @@ def get_pueue_counts() -> dict:
                     success += 1
                 else:
                     failed += 1
-        elif status == "Queued":
-            queued += 1
 
     return {
         "queued": queued,
