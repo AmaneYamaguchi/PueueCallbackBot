@@ -139,8 +139,13 @@ def build_payload(task_id: str, result: str) -> dict:
             if isinstance(failed, int):
                 exit_code = failed
 
+    counts = get_pueue_counts()
     payload = {
-        "queue_summary": get_pueue_counts(),
+        "queue_queued": counts.get("queued"),
+        "queue_running": counts.get("running"),
+        "queue_success": counts.get("success"),
+        "queue_failed": counts.get("failed"),
+        "queue_total": counts.get("total"),
         "task_id": task_id,
         "result": result,
         "command": task.get("command"),
