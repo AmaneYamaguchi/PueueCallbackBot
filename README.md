@@ -91,6 +91,7 @@ pueue add -- ls -la
 
 | フィールド | 型 | 内容 | 取得元 |
 |---|---|---|---|
+| `queue_summary` | object | キュー全体の件数集計（後述） | `pueue status --json` |
 | `task_id` | string | pueue のタスク ID | `--id` 引数 |
 | `result` | string | 完了ステータス（`Success`, `Failed` など） | `--result` 引数 |
 | `command` | string \| null | 実行されたコマンド | `pueue log --json` |
@@ -104,11 +105,29 @@ pueue add -- ls -la
 | `log` | string | `pueue log <id>` のテキスト出力 | `pueue log` コマンド |
 
 > `command` / `working_dir` / `exit_code` / `duration_seconds` は `pueue log --json` の取得に失敗した場合 `null` になる。
+> `queue_summary` は `pueue status --json` の取得に失敗した場合は空オブジェクト `{}` になる。
+
+#### `queue_summary` のフィールド
+
+| フィールド | 内容 |
+|---|---|
+| `queued` | キューで待機中のタスク数 |
+| `running` | 実行中のタスク数 |
+| `success` | 正常完了したタスク数 |
+| `failed` | 失敗したタスク数 |
+| `total` | 上記の合計 |
 
 ### 通知 JSON の例
 
 ```json
 {
+  "queue_summary": {
+    "queued": 2,
+    "running": 1,
+    "success": 5,
+    "failed": 1,
+    "total": 9
+  },
   "task_id": "42",
   "result": "Success",
   "command": "python train.py",

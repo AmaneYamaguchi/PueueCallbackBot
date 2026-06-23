@@ -79,6 +79,43 @@ def parse_duration(start_str: str | None, end_str: str | None) -> float | None:
         return None
 
 
+def get_pueue_counts() -> dict:
+    """pueue status --json でキュー全体の件数を集計する。失敗時は空dictを返す。"""
+    try:
+        result = subprocess.run(
+            ["pueue", "status", "--json"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        tasks = json.loads(result.stdout).get("tasks", {}).values()
+    except Exception:
+        return {}
+
+    queued = running = success = failed = 0
+    for task in tasks:
+        status = task.get("status")
+        if isinstance(status, dict):
+            if "Running" in status:
+                running += 1
+            elif "Done" in status:
+                done_result = status["Done"].get("result")
+                if done_result == "Success":
+                    success += 1
+                else:
+                    failed += 1
+        elif status == "Queued":
+            queued += 1
+
+    return {
+        "queued": queued,
+        "running": running,
+        "success": success,
+        "failed": failed,
+        "total": queued + running + success + failed,
+    }
+
+
 def build_payload(task_id: str, result: str) -> dict:
     log_json = get_pueue_log_json(task_id)
     log_text = get_pueue_log(task_id)
@@ -103,6 +140,7 @@ def build_payload(task_id: str, result: str) -> dict:
                 exit_code = failed
 
     payload = {
+        "queue_summary": get_pueue_counts(),
         "task_id": task_id,
         "result": result,
         "command": task.get("command"),
